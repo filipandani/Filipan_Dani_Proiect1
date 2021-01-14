@@ -1,23 +1,26 @@
 ﻿using Filipan_Dănuț_Proiect.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Filipan_Dănuț_Proiect.Data;
+using Filipan_Dănuț_Proiect.Controllers;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Filipan_Dănuț_Proiect.Models.ShopViewModels;
 
 namespace Filipan_Dănuț_Proiect.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
+        private readonly ShopContext _context;
+        public HomeController(ShopContext context)
         {
-            _logger = logger;
+            _context = context;
         }
-
+        
         public IActionResult Index()
         {
             return View();
@@ -32,6 +35,18 @@ namespace Filipan_Dănuț_Proiect.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+        public async Task<ActionResult> Statistics()
+        {
+            IQueryable<OrderGroup> data =
+            from order in _context.Orders
+            group order by order.OrderDate into dateGroup
+            select new OrderGroup()
+            {
+                OrderDate = dateGroup.Key,
+                DrinkCount = dateGroup.Count()
+            };
+            return View(await data.AsNoTracking().ToListAsync());
         }
     }
 }

@@ -20,9 +20,49 @@ namespace Filipan_Dănuț_Proiect.Controllers
         }
 
         // GET: Drinks
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            string sortOrder,
+            string currentFilter,
+            string searchString,
+            int? pageNumber)
         {
-            return View(await _context.Drinks.ToListAsync());
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewData["PriceSortParm"] = sortOrder == "Price" ? "price_desc" : "Price";
+            if (searchString != null)
+            {
+                pageNumber = 1;
+            }
+            else
+            {
+                searchString = currentFilter;
+            }
+            ViewData["CurrentFilter"] = searchString;
+            var drinks = from b in _context.Drinks
+                         select b;
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                drinks = drinks.Where(s => s.Name.Contains(searchString));
+            }
+            switch (sortOrder)
+            {
+                case "name_desc":
+                    drinks = drinks.OrderByDescending(b => b.Name);
+                    break;
+                case "Price":
+                    drinks = drinks.OrderBy(b => b.Price);
+                    break;
+                case "price_desc":
+                    drinks = drinks.OrderByDescending(b => b.Price);
+                    break;
+                default:
+                    drinks = drinks.OrderBy(b => b.Name);
+                    break; 
+            }
+                    int pageSize = 4;
+                    return View(await PaginatedList<Drink>.CreateAsync(drinks.AsNoTracking(), pageNumber ?? 1, pageSize));
+           
+            return View(await drinks.AsNoTracking().ToListAsync());
         }
 
         // GET: Drinks/Details/5
@@ -33,8 +73,11 @@ namespace Filipan_Dănuț_Proiect.Controllers
                 return NotFound();
             }
 
-            var drink = await _context.Drinks
-                .FirstOrDefaultAsync(m => m.ID == id);
+            var drink   = await _context.Drinks
+                                        .Include(s => s.Orders)
+                                        .ThenInclude(e => e.Customer)
+                                        .AsNoTracking()
+                                        .FirstOrDefaultAsync(m => m.ID == id);
             if (drink == null)
             {
                 return NotFound();
@@ -54,13 +97,22 @@ namespace Filipan_Dănuț_Proiect.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ID,Name,Brand,Price,Liters")] Drink drink)
+        public async Task<IActionResult> Create([Bind("Name,Brand,Price,Liters")] Drink drink)
         {
-            if (ModelState.IsValid)
+            try
             {
-                _context.Add(drink);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                if (ModelState.IsValid)
+                {
+                    _context.Add(drink);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+            catch (DbUpdateException /* ex*/)
+            {
+
+                ModelState.AddModelError("", "Unable to save changes. " +
+                "Try again, and if the problem persists ");
             }
             return View(drink);
         }
@@ -84,51 +136,52 @@ namespace Filipan_Dănuț_Proiect.Controllers
         // POST: Drinks/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
+        [HttpPost, ActionName("Edit")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ID,Name,Brand,Price,Liters")] Drink drink)
-        {
-            if (id != drink.ID)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(drink);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!DrinkExists(drink.ID))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(drink);
-        }
-
-        // GET: Drinks/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        public async Task<IActionResult> EditPost(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
+            var studentToUpdate = await _context.Drinks.FirstOrDefaultAsync(s => s.ID == id);
+            if (await TryUpdateModelAsync<Drink>(
+            studentToUpdate,
+            "",
+            s => s.Brand, s => s.Name, s => s.Price, s=>s.Liters))
+            {
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateException /* ex */)
+                {
+                    ModelState.AddModelError("", "Unable to save changes. " +
+                    "Try again, and if the problem persists");
+                }
+            }
+            return View(studentToUpdate);
+        }
 
+        // GET: Drinks/Delete/5
+        public async Task<IActionResult> Delete(int? id, bool? saveChangesError = false)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
             var drink = await _context.Drinks
-                .FirstOrDefaultAsync(m => m.ID == id);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.ID == id);
             if (drink == null)
             {
                 return NotFound();
+            }
+            if (saveChangesError.GetValueOrDefault())
+            {
+                ViewData["ErrorMessage"] =
+                "Delete failed. Try again";
             }
 
             return View(drink);
@@ -140,9 +193,21 @@ namespace Filipan_Dănuț_Proiect.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var drink = await _context.Drinks.FindAsync(id);
-            _context.Drinks.Remove(drink);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            if (drink == null)
+            {
+                return RedirectToAction(nameof(Index));
+            }
+            try
+            {
+                _context.Drinks.Remove(drink);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException /* ex */)
+            {
+
+                return RedirectToAction(nameof(Delete), new { id = id, saveChangesError = true });
+            }
         }
 
         private bool DrinkExists(int id)

@@ -5,13 +5,11 @@ using System.Threading.Tasks;
 
 namespace Filipan_Dănuț_Proiect.Models
 {
-    public class Order
+    public class ProvidedDrink
     {
-        public int OrderID { get; set; }
-        public int CustomerID { get; set; }
+        public int ProviderID { get; set; }
         public int DrinkID { get; set; }
-        public DateTime OrderDate { get; set; }
-        public Customer Customer { get; set; }
+        public Provider Provider { get; set; }
         public Drink Drink { get; set; }
     }
 }
