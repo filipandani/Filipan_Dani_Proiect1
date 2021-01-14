@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Filipan_Dănuț_Proiect.Models
+namespace BarModel.Models
 {
     public class Customer
     {

@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Filipan_Dănuț_Proiect", "Filipan_Dănuț_Proiect\Filipan_Dănuț_Proiect.csproj", "{06127F3E-BD11-4FAC-B09A-F8BF50E89E0C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BarModel", "Filipan_Dănuț_Proiect\BarModel\BarModel.csproj", "{30AFBA39-622F-4F35-AC2D-FBAE71F1BC03}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BarModel", "Filipan_Dănuț_Proiect\BarModel\BarModel.csproj", "{30AFBA39-622F-4F35-AC2D-FBAE71F1BC03}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BarWebAPI", "Filipan_Dănuț_Proiect\BarWebAPI\BarWebAPI.csproj", "{48132D13-D515-4DFF-A81B-344BECB7DD6E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{30AFBA39-622F-4F35-AC2D-FBAE71F1BC03}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30AFBA39-622F-4F35-AC2D-FBAE71F1BC03}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{30AFBA39-622F-4F35-AC2D-FBAE71F1BC03}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48132D13-D515-4DFF-A81B-344BECB7DD6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48132D13-D515-4DFF-A81B-344BECB7DD6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48132D13-D515-4DFF-A81B-344BECB7DD6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48132D13-D515-4DFF-A81B-344BECB7DD6E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Filipan_Dănuț_Proiect.Models
+namespace BarModel.Models
 {
     public class Drink
     {
