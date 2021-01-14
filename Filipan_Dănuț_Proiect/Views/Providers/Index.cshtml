@@ -1,8 +1,9 @@
 ﻿@model Filipan_Dănuț_Proiect.Models.ShopViewModels.ViewModel.ProviderIndexData
-@{
-    ViewData["Title"] = "Providers";
-}
-<h2>Providers</h2>
+
+@{ ViewData["Title"] = "Provider"; }
+
+<h2>Provider</h2>
+
 <p>
     <a asp-action="Create">Create New</a>
 </p>
@@ -11,6 +12,8 @@
         <tr>
             <th>Provider Name</th>
             <th>Site</th>
+            <th>Price</th>
+            <th>Liters</th>
             <th></th>
         </tr>
     </thead>
@@ -22,30 +25,91 @@
             {
                 selectedRow = "success";
             }
-        <tr class="@selectedRow">
-            <td>
-                @Html.DisplayFor(modelItem => item.ProviderName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Site)
-            </td>
-            
+<tr class="@selectedRow">
+    <td>
+        @Html.DisplayFor(modelItem => item.ProviderName)
+    </td>
+    <td>
+        @Html.DisplayFor(modelItem => item.Site)
+    </td>
 
-            <td>
-                @{
-                    foreach (var drink in item.ProvidedDrinks)
-                    {
-                        @drink.Drink.ID @: @drink.Drink.Name <br />
-                    }
-                }
-            </td>
-            <td>
-                <a asp-action="Index" asp-route-id="@item.ID">Select</a> |
-                <a asp-action="Edit" asp-route-id="@item.ID">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.ID">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.ID">Delete</a>
-            </td>
-        </tr>
-        }
+    <td>
+        @{ foreach (var drink in item.ProvidedDrinks)
+            {
+               @drink.Drink.ID @:  @drink.Drink.Name <br />
+            } }
+    </td>
+    <td>
+        <a asp-action="Index" asp-route-id="@item.ID">Select</a> |
+        <a asp-action="Edit" asp-route-id="@item.ID">Edit</a> |
+        <a asp-action="Details" asp-route-id="@item.ID">Details</a> |
+        <a asp-action="Delete" asp-route-id="@item.ID">Delete</a>
+    </td>
+</tr>
+}
     </tbody>
 </table>
+
+@if (Model.Drinks != null)
+{
+<h3>Drink provided by Provider</h3>
+                <table class="table">
+                    <tr>
+                        <th></th>
+                        <th>Name</th>
+                        <th>Brand</th>
+                        <th>Price</th>
+                        <th>Liters</th>
+
+                                    </tr>
+
+                    @foreach (var item in Model.Drinks)
+                    {
+                        string selectedRow = "";
+                        if (item.ID == (int?)ViewData["DrinkId"])
+                        {
+                            selectedRow = "success";
+                        }
+                <tr class="@selectedRow">
+                    <td>
+                        @Html.ActionLink("Select", "Index", new { drinkId = item.ID })
+                    </td>
+                    <td>
+                        @item.Name
+                    </td>
+                    <td>
+                        @item.Brand
+                    </td>
+                    <td>
+                        @item.Price
+                    </td>
+                    <td>
+                        @item.Liters
+                    </td>
+                </tr>
+}
+
+                </table>
+                                @if (Model.Orders != null)
+                                {
+                <h3>
+                   Provider provided the selectet drink
+                </h3>
+                                    <table class="table">
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Order Date</th>
+                                        </tr>
+                                        @foreach (var item in Model.Orders)
+                                        {
+                    <tr>
+                        <td>
+                            @item.Customer.Name
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.OrderDate)
+                        </td>
+                    </tr>
+}
+                                    </table>
+}}

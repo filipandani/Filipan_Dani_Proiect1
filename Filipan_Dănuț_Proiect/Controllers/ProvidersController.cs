@@ -93,13 +93,33 @@ namespace Filipan_Dănuț_Proiect.Controllers
             {
                 return NotFound();
             }
-
-            var provider = await _context.Providers.FindAsync(id);
+            var provider = await _context.Providers
+            .Include(i => i.ProvidedDrinks).ThenInclude(i => i.Drink)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.ID == id);
             if (provider == null)
             {
                 return NotFound();
             }
+            PopulateProvidedDrinkData(provider);
             return View(provider);
+
+        }
+        private void PopulateProvidedDrinkData(Provider provider)
+        {
+            var allDrinks = _context.Drinks;
+            var providerDrinks = new HashSet<int>(provider.ProvidedDrinks.Select(c => c.DrinkID));
+            var viewModel = new List<ProvidedDrinkData>();
+            foreach (var drink in allDrinks)
+            {
+                viewModel.Add(new ProvidedDrinkData
+                {
+                    DrinkID = drink.ID,
+                    Name = drink.Name,
+                    IsProvided = providerDrinks.Contains(drink.ID)
+                });
+            }
+            ViewData["Books"] = viewModel;
         }
 
         // POST: Providers/Edit/5
@@ -107,36 +127,70 @@ namespace Filipan_Dănuț_Proiect.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ID,ProviderName,Site")] Provider provider)
+        public async Task<IActionResult> Edit(int? id, string[] selectedDrinks)
         {
-            if (id != provider.ID)
+            if (id == null)
             {
                 return NotFound();
             }
-
-            if (ModelState.IsValid)
+            var providerToUpdate = await _context.Providers
+            .Include(i => i.ProvidedDrinks)
+            .ThenInclude(i => i.Drink)
+            .FirstOrDefaultAsync(m => m.ID == id);
+            if (await TryUpdateModelAsync<Provider>(providerToUpdate, "", i => i.ProviderName, i => i.Site))
             {
+                UpdateProvidedDrink(selectedDrinks, providerToUpdate);
                 try
                 {
-                    _context.Update(provider);
                     await _context.SaveChangesAsync();
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (DbUpdateException /* ex */)
                 {
-                    if (!ProviderExists(provider.ID))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+
+                    ModelState.AddModelError("", "Unable to save changes. " +
+                    "Try again, and if the problem persists, ");
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(provider);
+            UpdateProvidedDrink(selectedDrinks, providerToUpdate);
+            PopulateProvidedDrinkData(providerToUpdate);
+            return View(providerToUpdate);
         }
-
+        private void UpdateProvidedDrink(string[] selectedDrinks, Provider providerToUpdate)
+        {
+            if (selectedDrinks == null)
+            {
+                providerToUpdate.ProvidedDrinks = new List<ProvidedDrink>();
+                return;
+            }
+            var selectedDrinksHS = new HashSet<string>(selectedDrinks);
+            var providedDrinks = new HashSet<int>
+            (providerToUpdate.ProvidedDrinks.Select(c => c.Drink.ID));
+            foreach (var drink in _context.Drinks)
+            {
+                if (selectedDrinksHS.Contains(drink.ID.ToString()))
+                {
+                    if (!providedDrinks.Contains(drink.ID))
+                    {
+                        providerToUpdate.ProvidedDrinks.Add(new ProvidedDrink
+                        {
+                            ProviderID =
+                       providerToUpdate.ID,
+                            DrinkID = drink.ID
+                        });
+                    }
+                }
+                else
+                {
+                    if (providedDrinks.Contains(drink.ID))
+                    {
+                        ProvidedDrink drinkToRemove = providerToUpdate.ProvidedDrinks.FirstOrDefault(i
+                       => i.DrinkID == drink.ID);
+                        _context.Remove(drinkToRemove);
+                    }
+                }
+            }
+        }
         // GET: Providers/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
