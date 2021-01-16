@@ -119,7 +119,7 @@ namespace Filipan_Dănuț_Proiect.Controllers
                     IsProvided = providerDrinks.Contains(drink.ID)
                 });
             }
-            ViewData["Books"] = viewModel;
+            ViewData["Drinks"] = viewModel;
         }
 
         // POST: Providers/Edit/5
